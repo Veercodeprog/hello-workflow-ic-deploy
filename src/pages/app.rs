@@ -18,7 +18,7 @@ pub fn App() -> impl IntoView {
                     set_count.update(|n| *n += 1);
                 }
             >
-                "Increment: "
+                "Increment test: "
                 {count}
             </button>
 
