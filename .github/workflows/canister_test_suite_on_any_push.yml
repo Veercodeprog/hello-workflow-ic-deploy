@@ -54,17 +54,17 @@ jobs:
       - name: Start Local Replica # Start local DFX replica
         run: nix-shell --run "dfx start --background"
 
-      - name: Get identity list # Start local DFX replica
-        run: nix-shell --run "dfx identity list"
+      # - name: Get identity list # Start local DFX replica
+      #   run: nix-shell --run "dfx identity list"
 
       - name: Use myidentity # Start local DFX replica
         run: nix-shell --run "dfx identity use myidentity"
 
-      - name: Get identity principal # Start local DFX replica
-        run: nix-shell --run "dfx identity get-principal"
-
-      - name: check balance
-        run: nix-shell --run "dfx cycles balance --network ic"
+      # - name: Get identity principal # Start local DFX replica
+      #   run: nix-shell --run "dfx identity get-principal"
+      #
+      # - name: check balance
+      #   run: nix-shell --run "dfx cycles balance --network ic"
       # - name: Create Canister # Create the canister if it doesn't exist
       #   run: |
       #     nix-shell --run "dfx canister create leptos-hello --no-wallet || true"
