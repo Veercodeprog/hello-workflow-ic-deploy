@@ -1,9 +1,6 @@
 name: Canisters Test Suite and Deployment
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -20,18 +17,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Cache install Nix packages
         uses: rikhuijzer/cache-install@v1.1.4
         with:
           key: nix-${{ hashFiles('default.nix') }}
-      # - name: Install Rust
-      #   run: |
-      #     sudo apt update
-      #     curl https://sh.rustup.rs -sSf | sh -s -- -y
-      #     source $HOME/.cargo/env
-      #     cargo install ic-cdk-optimizer
 
-      - name: Cache rust dependencies, build output and DFX build cache
+      - name: Cache rust dependencies, build output, and DFX build cache
         uses: actions/cache@v3
         with:
           path: |
@@ -43,68 +35,48 @@ jobs:
             .dfx/
           key: rust-test-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Import DFX Identity # Import DFX identity using secret key
+      - name: Import DFX identity
         run: |
-          touch actions_identity.pem
-          echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
-          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
-          rm actions_identity.pem
-          nix-shell --run "dfx identity use actions"
+          touch myidentity.pem
+          echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > myidentity.pem
+          nix-shell --run "dfx identity import --storage-mode=plaintext myidentity myidentity.pem"
+          rm myidentity.pem
+      # - name: Import DFX identity
+      #   run: |
+      #     echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
+      #     nix-shell --run "dfx identity import --storage-mode=plaintext actions actions_identity.pem"
+      #     rm actions_identity.pem
+
+      - name: Check current DFX identity
+        run: |
+          nix-shell --run "dfx identity whoami"
+
       - name: Start Local Replica # Start local DFX replica
         run: nix-shell --run "dfx start --background"
-      - name: Set up DFX default identity
-        run: |
-          if /usr/local/bin/dfx identity list | grep -q "default"; then
-             echo "Using existing default identity."
-             /usr/local/bin/dfx identity use default
-          else
-              echo "Importing private key into default identity."
-              echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > identity.pem
-              chmod 600 identity.pem
-              /usr/local/bin/dfx identity import default identity.pem
-              /usr/local/bin/dfx identity use default
-          fi
 
-      - name: Create Canister IDs # Create canister IDs
-        run: nix-shell --run "dfx canister create --no-wallet backend"
+      # - name: Get identity list # Start local DFX replica
+      #   run: nix-shell --run "dfx identity list"
+
+      - name: Use myidentity # Start local DFX replica
+        run: nix-shell --run "dfx identity use myidentity"
+
+      # - name: Get identity principal # Start local DFX replica
+      #   run: nix-shell --run "dfx identity get-principal"
+      #
+      # - name: check balance
+      #   run: nix-shell --run "dfx cycles balance --network ic"
+      # - name: Create Canister # Create the canister if it doesn't exist
+      #   run: |
+      #     nix-shell --run "dfx canister create leptos-hello --no-wallet || true"
+      #
+      - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
+        env:
+          ICP_NETWORK: ic # Specify the network to deploy to (default is 'ic')
+        run: |
+          nix-shell --run "dfx deploy --network ic --with-cycles 1000000000000 --yes"
 
       - name: Stop Local Replica # Stop the local DFX replica
         run: nix-shell --run "dfx stop"
-
-      - name: Build Backend Canister # Build backend canister
-        run: |
-          nix-shell --run "dfx build backend"
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/backend.wasm
-      # - name: Deploy Canister
-      #   run: nix-shell --run "dfx deploy"
-
-      - name: Run Canister Test Suite # Run canister tests
-        env:
-          POCKET_IC_BIN: ${{ github.workspace }}/pocket-ic
-        run: nix-shell --run "cargo test"
-
-deploy:
-  name: Deploy Canister # Deployment job
-  runs-on: ubuntu-22.04
-  needs: test # Depends on test job completion
-
-  steps:
-    - name: Checkout Code # Check out repository code
-      uses: actions/checkout@v3
-
-    - name: Import DFX Identity # Import DFX identity using secret key
-      run: |
-        touch actions_identity.pem
-        echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
-        nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
-        rm actions_identity.pem
-        nix-shell --run "dfx identity use actions"
-
-    - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
-      env:
-        ICP_NETWORK: ic
-      run: |
-        nix-shell --run "dfx deploy backend --network ic --with-cycles 1000000000000"
 
   # deploy:
   #   name: Deploy Canister # Deployment job
@@ -114,14 +86,6 @@ deploy:
   #   steps:
   #     - name: Checkout Code # Check out repository code
   #       uses: actions/checkout@v3
-  #
-  #     # - name: Import DFX Identity # Import DFX identity using secret key
-  #     #   run: |
-  #     #     touch actions_identity.pem
-  #     #     echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
-  #     #     nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
-  #     #     rm actions_identity.pem
-  #     #     nix-shell --run "dfx identity use actions"
   #
   #     - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
   #       env:
