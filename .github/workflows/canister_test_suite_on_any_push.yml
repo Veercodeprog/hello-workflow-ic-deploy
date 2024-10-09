@@ -1,76 +1,82 @@
-name: Deploy Backend to Internet Computer
+name: Canisters Test Suite and Deployment
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    env:
-      DFX_PRINCIPAL_ID: ${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRINCIPAL_ID }}
-      DFX_PRIVATE_KEY: ${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}
-      BACKEND_CANISTER_ID: hmh62-uiaaa-aaaai-actxq-cai
+  test:
+    name: Run Canister Test Suite
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Cache install Nix packages
+        uses: rikhuijzer/cache-install@v1.1.4
+        with:
+          key: nix-${{ hashFiles('default.nix') }}
+      # - name: Install Rust
+      #   run: |
+      #     sudo apt update
+      #     curl https://sh.rustup.rs -sSf | sh -s -- -y
+      #     source $HOME/.cargo/env
+      #     cargo install ic-cdk-optimizer
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config build-essential libssl-dev
+      - name: Cache rust dependencies, build output and DFX build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            .dfx/
+          key: rust-test-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download and install DFX SDK
+      - name: Import DFX identity
         run: |
-          DFX_VERSION=0.24.0
-          curl -LO https://github.com/dfinity/sdk/releases/download/${DFX_VERSION}/dfx-${DFX_VERSION}-x86_64-linux.tar.gz
-          sudo tar -xzf dfx-${DFX_VERSION}-x86_64-linux.tar.gz -C /usr/local/bin
-          rm dfx-${DFX_VERSION}-x86_64-linux.tar.gz
+          touch actions_identity.pem
+          echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
+          nix-shell --run "dfx identity import --storage-mode=plaintext actions actions_identity.pem"
+          rm actions_identity.pem
+          nix-shell --run "dfx identity use actions"
 
-      - name: Check DFX installation
+      - name: Check current DFX identity
         run: |
-          /usr/local/bin/dfx --version
+          nix-shell --run "dfx identity whoami"
 
-      - name: Install Rust target for WebAssembly
-        run: |
-          rustup target add wasm32-unknown-unknown
+      - name: Start Local Replica # Start local DFX replica
+        run: nix-shell --run "dfx start --background"
 
-      - name: Set up DFX default identity
+      # - name: Create Canister IDs # Create canister IDs
+      #   run: nix-shell --run "dfx canister create --no-wallet backend"
+      - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
+        env:
+          ICP_NETWORK: ic # Specify the network to deploy to (default is 'ic')
         run: |
-          if /usr/local/bin/dfx identity list | grep -q "default"; then
-            echo "Using existing default identity."
-            /usr/local/bin/dfx identity use default
-          else
-            echo "Importing private key into default identity."
-            echo "${DFX_PRIVATE_KEY}" > identity.pem
-            chmod 600 identity.pem
-            /usr/local/bin/dfx identity import default identity.pem
-            /usr/local/bin/dfx identity use default
-          fi
+          nix-shell --run "dfx deploy --network ic --yes"
 
-      - name: Create Backend Canister if not exists
-        run: |
-          if /usr/local/bin/dfx canister id backend --network ic >/dev/null 2>&1; then
-            echo "Backend canister already exists."
-          else
-            echo "Creating Backend canister."
-            /usr/local/bin/dfx canister create backend --network ic
-          fi
+      - name: Stop Local Replica # Stop the local DFX replica
+        run: nix-shell --run "dfx stop"
 
-      - name: Build Backend with DFX
-        run: |
-          /usr/local/bin/dfx build backend --network ic
-
-      - name: Install Backend Canister
-        run: |
-          /usr/local/bin/dfx canister install backend --mode reinstall --network ic
-
-      - name: Deploy Backend to Canister 2
-        run: |
-          /usr/local/bin/dfx deploy backend --network ic
-
-      - name: Clean up
-        run: |
-          rm -f identity.pem
+  # deploy:
+  #   name: Deploy Canister # Deployment job
+  #   runs-on: ubuntu-22.04
+  #   needs: test # Depends on test job completion
+  #
+  #   steps:
+  #     - name: Checkout Code # Check out repository code
+  #       uses: actions/checkout@v3
+  #
+  #     - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
+  #       env:
+  #         ICP_NETWORK: ic # Specify the network to deploy to (default is 'ic')
+  #       run: |
+  #         nix-shell --run "dfx deploy backend --network ic"
