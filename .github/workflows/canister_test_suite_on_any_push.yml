@@ -54,9 +54,9 @@ jobs:
       - name: Start Local Replica # Start local DFX replica
         run: nix-shell --run "dfx start --background"
 
-      # - name: Create Canister # Create the canister if it doesn't exist
-      #   run: |
-      #     nix-shell --run "dfx canister create leptos-hello --no-wallet || true"
+      - name: Create Canister # Create the canister if it doesn't exist
+        run: |
+          nix-shell --run "dfx canister create leptos-hello --no-wallet || true"
       #
       - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
         env:
