@@ -62,7 +62,7 @@ jobs:
         env:
           ICP_NETWORK: ic # Specify the network to deploy to (default is 'ic')
         run: |
-          nix-shell --run "dfx deploy"
+          nix-shell --run "dfx deploy --network ic --yes"
 
       - name: Stop Local Replica # Stop the local DFX replica
         run: nix-shell --run "dfx stop"
