@@ -53,6 +53,12 @@ jobs:
         run: |
           nix-shell --run "dfx canister create leptos-hello --no-wallet || true"
 
+      - name: Update Canister Controllers # Update the controllers for the canister
+        run: |
+          # Add the required controller principal IDs here
+          nix-shell --run "dfx canister update-settings leptos-hello --add-controller bnz7o-iuaaa-aaaaa-qaaaa-cai"
+          nix-shell --run "dfx canister update-settings leptos-hello --add-controller i2mqu-2agp6-wvjp3-t5h3s-wxc6h-isphd-igtmm-jbxer-3w4bu-navzu-wae"
+
       - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
         env:
           ICP_NETWORK: ic # Specify the network to deploy to (default is 'ic')
