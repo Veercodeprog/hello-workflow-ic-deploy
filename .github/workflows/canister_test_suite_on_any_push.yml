@@ -80,11 +80,6 @@ jobs:
           POCKET_IC_BIN: ${{ github.workspace }}/pocket-ic
         run: nix-shell --run "cargo test"
 
-deploy:
-  name: Deploy Canister # Deployment job
-  runs-on: ubuntu-22.04
-  needs: test # Depends on test job completion
-
   steps:
     - name: Checkout Code # Check out repository code
       uses: actions/checkout@v3
