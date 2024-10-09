@@ -43,7 +43,7 @@ jobs:
       - name: Import DFX identity
         run: |
           touch actions_identity.pem
-          echo "${{ secrets.DFX_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem
+          echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
           nix-shell --run "dfx identity import --storage-mode=plaintext actions actions_identity.pem"
           rm actions_identity.pem
           nix-shell --run "dfx identity use actions"
