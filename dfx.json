@@ -1,6 +1,6 @@
 {
   "canisters": {
-    "front_rust": {
+    "leptos-hello": {
       "source": ["dist"],
       "type": "assets"
     }
