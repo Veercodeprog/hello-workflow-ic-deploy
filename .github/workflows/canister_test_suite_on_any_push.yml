@@ -57,22 +57,10 @@ jobs:
         env:
           ICP_NETWORK: ic # Specify the network to deploy to (default is 'ic')
         run: |
-          nix-shell --run "dfx deploy --network ic"
+          nix-shell --run "dfx deploy --network ic --yes"
 
       - name: Stop Local Replica # Stop the local DFX replica
         run: nix-shell --run "dfx stop"
-
-      # - name: Build Backend Canister # Build backend canister
-      #   run: |
-      #     nix-shell --run "dfx build backend"
-      #     gzip -f -1 ./target/wasm32-unknown-unknown/release/backend.wasm
-      # - name: Deploy Canister
-      #   run: nix-shell --run "dfx deploy"
-
-      # - name: Run Canister Test Suite # Run canister tests
-      #   env:
-      #     POCKET_IC_BIN: ${{ github.workspace }}/pocket-ic
-      #   run: nix-shell --run "cargo test"
 
   # deploy:
   #   name: Deploy Canister # Deployment job
@@ -82,14 +70,6 @@ jobs:
   #   steps:
   #     - name: Checkout Code # Check out repository code
   #       uses: actions/checkout@v3
-  #
-  #     # - name: Import DFX Identity # Import DFX identity using secret key
-  #     #   run: |
-  #     #     touch actions_identity.pem
-  #     #     echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
-  #     #     nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
-  #     #     rm actions_identity.pem
-  #     #     nix-shell --run "dfx identity use actions"
   #
   #     - name: Deploy Canister to ICP # Deploy canister to the Internet Computer
   #       env:
