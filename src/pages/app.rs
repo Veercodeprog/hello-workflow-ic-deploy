@@ -8,7 +8,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <main class="flex flex-col gap-4 p-4 w-fit">
-            <h1 class="text-green">"Hello, World check !"</h1>
+            <h1 class="text-green">"Hello, World!"</h1>
             <p>{count}</p>
             <button
                 // style:background-color=move || format!("rgb({}, {}, 100)", 100, 100)
