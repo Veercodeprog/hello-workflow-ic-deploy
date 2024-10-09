@@ -21,12 +21,6 @@ jobs:
         uses: rikhuijzer/cache-install@v1.1.4
         with:
           key: nix-${{ hashFiles('default.nix') }}
-      # - name: Install Rust
-      #   run: |
-      #     sudo apt update
-      #     curl https://sh.rustup.rs -sSf | sh -s -- -y
-      #     source $HOME/.cargo/env
-      #     cargo install ic-cdk-optimizer
 
       - name: Cache rust dependencies, build output and DFX build cache
         uses: actions/cache@v3
@@ -44,9 +38,16 @@ jobs:
         run: |
           touch actions_identity.pem
           echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
-          nix-shell --run "dfx identity import --storage-mode=plaintext actions actions_identity.pem"
+          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
           rm actions_identity.pem
-          nix-shell --run "dfx identity use actions"
+
+      # - name: Import DFX identity
+      #   run: |
+      #     touch actions_identity.pem
+      #     echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
+      #     nix-shell --run "dfx identity import --storage-mode=plaintext actions actions_identity.pem"
+      #     rm actions_identity.pem
+      #     nix-shell --run "dfx identity use actions"
 
       - name: Check current DFX identity
         run: |
