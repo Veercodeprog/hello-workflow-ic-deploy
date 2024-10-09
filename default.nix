@@ -33,9 +33,8 @@ dfx-env.overrideAttrs (old: {
       python3Full         # Full Python 3 environment
       libiconv            # Text conversion library
       wget                # Tool to download files from the web
-      nodejs              # **Added**: Node.js runtime
-      npm                 # **Added**: Node Package Manager for Node.js
-      trunk               # **Added**: Trunk for managing front-end assets
+      nodejs              # Node.js runtime (includes npm)
+      trunk               # Trunk for managing front-end assets
     ] ++ (if pkgs.stdenv.isDarwin then [
       darwin.apple_sdk.frameworks.Foundation
       pkgs.darwin.libiconv
