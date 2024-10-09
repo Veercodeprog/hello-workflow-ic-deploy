@@ -50,18 +50,6 @@ jobs:
 
       - name: Start Local Replica # Start local DFX replica
         run: nix-shell --run "dfx start --background"
-      - name: Set up DFX default identity
-        run: |
-          if /usr/local/bin/dfx identity list | grep -q "default"; then
-             echo "Using existing default identity."
-             /usr/local/bin/dfx identity use default
-          else
-              echo "Importing private key into default identity."
-              echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > identity.pem
-              chmod 600 identity.pem
-              /usr/local/bin/dfx identity import default identity.pem
-              /usr/local/bin/dfx identity use default
-          fi
 
       # - name: Create Canister IDs # Create canister IDs
       #   run: nix-shell --run "dfx canister create --no-wallet backend"
