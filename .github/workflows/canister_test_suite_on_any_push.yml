@@ -40,13 +40,14 @@ jobs:
             .dfx/
           key: rust-test-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Import DFX Identity # Import DFX identity using secret key
+      - name: Import DFX identity
         run: |
           touch actions_identity.pem
-          echo "${{ secrets.FUEL_DAO_CANISTER_CONTROLLER_PRIVATE_KEY }}" > actions_identity.pem
+          echo "${{ secrets.CANISTER_CONTROLLER_SECRET_KEY }}" > actions_identity.pem
           nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
           rm actions_identity.pem
           nix-shell --run "dfx identity use actions"
+
       - name: Start Local Replica # Start local DFX replica
         run: nix-shell --run "dfx start --background"
       - name: Set up DFX default identity
